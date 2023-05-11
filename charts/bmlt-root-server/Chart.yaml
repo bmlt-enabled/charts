@@ -10,7 +10,7 @@ keywords:
 home: https://bmlt.app
 icon: https://bmlt.app/wp-content/uploads/2020/08/cropped-BMLTe-logo-300x300.png
 sources:
-  - https://github.com/bmlt-enabled/bmlt-root-server-chart
+  - https://github.com/bmlt-enabled/charts
 maintainers:
   - name: BMLT Enabled
     email: admin@bmlt.app
