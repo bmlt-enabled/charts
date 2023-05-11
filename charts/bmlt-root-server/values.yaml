@@ -10,6 +10,32 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 
+bmlt:
+  aggregatorMode: "false"
+  gkey: ""
+  secrets: {}
+    # gkey:
+    #   name: "gkey-creds"
+    #   key: "google-key"
+
+database:
+  host: "{{ .Release.Name  }}-postgresql"
+  port: 3306
+  name: rootserver
+  username: rootserver
+  password: rootserver
+  secrets: {}
+    # username:
+    #   name: "database-creds"
+    #   key: "db-admin-user"
+    # password:
+    #   name: "database-creds"
+    #   key: "db-admin-password"
+
+service:
+  type: ClusterIP
+  port: 8000
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
@@ -27,9 +53,6 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-service:
-  type: ClusterIP
-  port: 8000
 
 ingress:
   enabled: false

@@ -45,6 +45,50 @@ spec:
             httpGet:
               path: /
               port: http
+          env:
+            - name: AGGREGATOR_MODE_ENABLED
+            {{- if .Values.bmlt.aggregatorMode }}
+              value: {{ .Values.bmlt.aggregatorMode | quote }}
+            {{- else }}
+              value: "false"
+            {{- end }}
+            - name: DB_DATABASE
+              value: {{ .Values.database.name | quote }}
+            - name: DB_USER
+            {{- if .Values.database.secrets.username }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ tpl .Values.database.secrets.username.name . }}
+                  key: {{ tpl .Values.database.secrets.username.key . }}
+            {{- else if .Values.database.username }}
+              value: {{ .Values.database.username }}
+            {{- end }}
+            - name: DB_PASSWORD
+            {{- if .Values.database.secrets.password }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ tpl .Values.database.secrets.password.name . }}
+                  key: {{ tpl .Values.database.secrets.password.key . }}
+            {{- else if .Values.database.password }}
+              value: {{ .Values.database.password }}
+            {{- end }}
+            - name: DB_HOST
+              value: {{ .Values.database.host | quote }}
+            - name: GKEY
+            {{- if .Values.bmlt.secrets.gkey }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ tpl .Values.bmlt.secrets.gkey.name . }}
+                  key: {{ tpl .Values.bmlt.secrets.gkey.key . }}
+            {{- else if .Values.bmlt.gkey }}
+              value: {{ .Values.bmlt.gkey }}
+            {{- end }}
+            - name: DB_PREFIX
+            {{- if .Values.database.dbprefix }}
+              value: {{ .Values.database.dbprefix | quote }}
+            {{- else }}
+              value: "na"
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
