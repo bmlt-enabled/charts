@@ -1,0 +1,24 @@
+apiVersion: v1
+entries:
+  bmlt-root-server:
+  - apiVersion: v2
+    appVersion: 3.0.4
+    created: "2023-05-10T21:20:46.066208-04:00"
+    description: Basic Meeting List Toolbox Root Server
+    digest: 40e5bb8afc6d71a14b6999bcace9f0a7b2302237b33f54164b48f1a53e0a4acc
+    home: https://bmlt.app
+    icon: https://bmlt.app/wp-content/uploads/2020/08/cropped-BMLTe-logo-300x300.png
+    keywords:
+    - bmlt
+    - root-server
+    maintainers:
+    - email: admin@bmlt.app
+      name: BMLT Enabled
+    name: bmlt-root-server
+    sources:
+    - https://github.com/bmlt-enabled/bmlt-root-server-chart
+    type: application
+    urls:
+    - https://charts.bmlt.app/bmlt-root-server-0.1.0.tgz
+    version: 0.1.0
+generated: "2023-05-10T21:20:46.059029-04:00"
