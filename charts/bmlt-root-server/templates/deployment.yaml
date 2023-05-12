@@ -35,20 +35,20 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.port }}
+              containerPort: 8000
               protocol: TCP
           livenessProbe:
             httpGet:
               path: /
-              port: http
+              port: 8000
           readinessProbe:
             httpGet:
               path: /
-              port: http
+              port: 8000
           env:
             - name: AGGREGATOR_MODE_ENABLED
-            {{- if .Values.bmlt.aggregatorMode }}
-              value: {{ .Values.bmlt.aggregatorMode | quote }}
+            {{- if .Values.bmlt.aggregatorMode.enabled }}
+              value: {{ .Values.bmlt.aggregatorMode.enabled | quote }}
             {{- else }}
               value: "false"
             {{- end }}
