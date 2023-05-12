@@ -18,6 +18,8 @@ https://charts.bmlt.app
       password: rootserver
     ```
     `helm repo add bitnami https://charts.bitnami.com/bitnami`
+
     `helm install -f values.yaml mysql bitnami/mysql -n <namespace>`
+
 
 * If using alb for ingress you will need to make sure  AWS Load Balancer Controller is installed on cluster.
