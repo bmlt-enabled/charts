@@ -23,3 +23,5 @@ https://charts.bmlt.app
 
 
 * If using alb for ingress you will need to make sure  AWS Load Balancer Controller is installed on cluster.
+
+dockerhub helm chart `helm pull oci://registry-1.docker.io/bmltenabled/bmlt-root-server --version 0.1.1`
