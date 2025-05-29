@@ -1,68 +1,304 @@
-
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Helm Charts</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css" />
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helm Chart Repository</title>
     <style>
-      .markdown-body {
-        box-sizing: border-box;
-        min-width: 200px;
-        max-width: 980px;
-        margin: 0 auto;
-        padding: 45px;
-      }
-      @media (max-width: 767px) {
-        .markdown-body {
-          padding: 15px;
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
         }
-      }
+        .container {
+            max-width: 1200px; margin: 0 auto; padding: 40px 20px;
+        }
+        .header {
+            background: white; border-radius: 12px; padding: 40px; margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0 0 20px 0; color: #2c3e50; font-size: 2.5em;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .repo-command {
+            background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px;
+            padding: 20px; font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px; margin: 20px 0;
+            position: relative; overflow-x: auto;
+        }
+        .copy-btn {
+            position: absolute; top: 10px; right: 10px;
+            background: #007bff; color: white; border: none;
+            padding: 8px 12px; border-radius: 4px; cursor: pointer;
+            font-size: 12px;
+        }
+        .copy-btn:hover { background: #0056b3; }
+        .loading {
+            text-align: center; padding: 40px; color: white;
+            font-size: 1.2em;
+        }
+        .error {
+            background: #e74c3c; color: white; padding: 20px;
+            border-radius: 8px; margin: 20px 0;
+        }
+        .charts-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px; margin-top: 30px;
+        }
+        .chart-card {
+            background: white; border-radius: 12px; padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .chart-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .chart-name {
+            font-size: 1.4em; font-weight: bold; color: #2c3e50;
+            margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
+        }
+        .chart-version {
+            background: #e74c3c; color: white; padding: 4px 8px;
+            border-radius: 4px; font-size: 0.8em; font-weight: normal;
+        }
+        .chart-description {
+            color: #666; margin: 15px 0; line-height: 1.5;
+            min-height: 3em;
+        }
+        .chart-meta {
+            display: flex; gap: 15px; margin: 15px 0;
+            font-size: 0.9em; color: #7f8c8d;
+            flex-wrap: wrap;
+        }
+        .download-btn {
+            background: #27ae60; color: white; text-decoration: none;
+            padding: 12px 20px; border-radius: 6px; display: inline-block;
+            font-weight: 500; transition: background 0.2s;
+            margin-top: 15px;
+        }
+        .download-btn:hover { background: #219a52; }
+        .stats {
+            background: white; border-radius: 12px; padding: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 30px;
+            text-align: center;
+        }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px; margin-top: 20px;
+        }
+        .stat-item {
+            padding: 20px; background: #f8f9fa; border-radius: 8px;
+        }
+        .stat-number {
+            font-size: 2em; font-weight: bold; color: #3498db;
+            display: block;
+        }
+        .footer {
+            text-align: center; margin-top: 40px; color: white;
+            opacity: 0.8;
+        }
+        .version-list {
+            margin-top: 10px; font-size: 0.9em;
+        }
+        .version-item {
+            display: inline-block; margin: 2px 5px 2px 0;
+            background: #ecf0f1; padding: 4px 8px; border-radius: 4px;
+            color: #2c3e50; text-decoration: none;
+        }
+        .version-item:hover {
+            background: #bdc3c7;
+        }
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 2em; }
+            .chart-meta { flex-direction: column; gap: 5px; }
+        }
     </style>
-  </head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <div class="loading">
+        <div>📦 Loading Helm Charts...</div>
+    </div>
+</div>
 
-  <body>
+<script>
+    class HelmChartBrowser {
+        constructor() {
+            this.repoUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+            this.init();
+        }
 
-    <section class="markdown-body">
-      <h1>Helm Charts</h1>
+        async init() {
+            try {
+                const indexData = await this.fetchIndexYaml();
+                this.renderRepository(indexData);
+            } catch (error) {
+                this.renderError(error.message);
+            }
+        }
 
-      <h2>Charts</h2>
-        <ul>
+        async fetchIndexYaml() {
+            const response = await fetch('./index.yaml');
+            if (!response.ok) {
+                throw new Error(`Failed to fetch index.yaml: ${response.status} ${response.statusText}`);
+            }
+            const yamlText = await response.text();
+            return jsyaml.load(yamlText);
+        }
 
-            <li>
-                <p>
-                    bmlt-root-server
-                    (<a href="https://charts.bmlt.app/bmlt-root-server-0.1.1.tgz" title="https://charts.bmlt.app/bmlt-root-server-0.1.1.tgz">
-                    0.1.1
-                    @
-                    3.0.4
-                </a>)
-                </p>
-                <p>
-                    Basic Meeting List Toolbox Root Server
-                </p>
-            </li>
+        renderRepository(indexData) {
+            const entries = indexData.entries || {};
+            const totalCharts = Object.keys(entries).length;
+            const totalVersions = Object.values(entries).reduce((sum, versions) => sum + versions.length, 0);
+            const generated = indexData.generated ? new Date(indexData.generated) : new Date();
 
-        </ul>
-        <ul>
+            const repoName = document.title || 'Helm Chart Repository';
+            const addRepoCommand = `helm repo add bmlt ${this.repoUrl}`;
 
-            <li>
-                <p>
-                    bmlt-root-server
-                    (<a href="https://charts.bmlt.app/bmlt-root-server-0.1.0.tgz" title="https://charts.bmlt.app/bmlt-root-server-0.1.0.tgz">
-                    0.1.0
-                    @
-                    3.0.4
-                </a>)
-                </p>
-                <p>
-                    Basic Meeting List Toolbox Root Server
-                </p>
-            </li>
+            document.getElementById('app').innerHTML = `
+                    <div class="container">
+                        <div class="header">
+                            <h1>📦 ${repoName}</h1>
+                            <p style="color: #666; font-size: 1.1em; margin: 10px 0;">
+                                Add this Helm repository to start using these charts
+                            </p>
+                            <div class="repo-command">
+                                <code>${addRepoCommand}</code>
+                                <button class="copy-btn" onclick="copyToClipboard('${addRepoCommand}')">Copy</button>
+                            </div>
+                        </div>
 
-        </ul>
-    </section>
-		<time datetime="2023-05-10T21:20:46" pubdate id="generated">Wed May 10 2023 09:20:46PM EDT-04:00</time>
-  </body>
+                        <div class="stats">
+                            <h2 style="margin-top: 0; color: #2c3e50;">📊 Repository Stats</h2>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <span class="stat-number">${totalCharts}</span>
+                                    <div>Charts</div>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number">${totalVersions}</span>
+                                    <div>Total Versions</div>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number">${generated.toLocaleDateString()}</span>
+                                    <div>Last Updated</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="charts-grid">
+                            ${this.renderCharts(entries)}
+                        </div>
+
+                        <div class="footer">
+                            <p>Generated from index.yaml • ${new Date().toLocaleString()}</p>
+                        </div>
+                    </div>
+                `;
+        }
+
+        renderCharts(entries) {
+            return Object.entries(entries).map(([chartName, versions]) => {
+                // Sort versions by semver (newest first)
+                const sortedVersions = [...versions].sort((a, b) => this.compareVersions(b.version, a.version));
+                const latestVersion = sortedVersions[0];
+
+                const created = latestVersion.created ? new Date(latestVersion.created) : null;
+                const installCommand = `helm install my-name bmlt/${chartName}`;
+
+                return `
+                        <div class="chart-card">
+                            <div class="chart-name">
+                                📈 ${chartName}
+                                <span class="chart-version">v${latestVersion.version}</span>
+                            </div>
+                            <div class="chart-description">
+                                ${latestVersion.description || 'No description available'}
+                            </div>
+                            <div class="chart-meta">
+                                <span>🏷️ App: ${latestVersion.appVersion || 'N/A'}</span>
+                                <span>📦 Type: ${latestVersion.type || 'application'}</span>
+                                ${created ? `<span>📅 ${created.toLocaleDateString()}</span>` : ''}
+                            </div>
+                            <div style="margin: 15px 0;">
+                                <div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">Install:</div>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.85em; overflow-x: auto;">
+                                    ${installCommand}
+                                </div>
+                            </div>
+                            <a href="${latestVersion.urls[0]}" class="download-btn">
+                                ⬇️ Download v${latestVersion.version}
+                            </a>
+                            ${sortedVersions.length > 1 ? `
+                                <div class="version-list">
+                                    <div style="color: #666; font-size: 0.9em; margin-bottom: 8px;">Other versions:</div>
+                                    ${sortedVersions.slice(1).map(version =>
+                    `<a href="${version.urls[0]}" class="version-item">v${version.version}</a>`
+                ).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+            }).join('');
+        }
+
+        renderError(message) {
+            document.getElementById('app').innerHTML = `
+                    <div class="container">
+                        <div class="error">
+                            <h2>❌ Error Loading Repository</h2>
+                            <p>${message}</p>
+                            <p>Make sure the index.yaml file exists and is accessible.</p>
+                        </div>
+                    </div>
+                `;
+        }
+
+        compareVersions(a, b) {
+            const aParts = a.split('.').map(n => parseInt(n) || 0);
+            const bParts = b.split('.').map(n => parseInt(n) || 0);
+
+            for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+                const aPart = aParts[i] || 0;
+                const bPart = bParts[i] || 0;
+                if (aPart !== bPart) {
+                    return aPart - bPart;
+                }
+            }
+            return 0;
+        }
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            btn.style.background = '#27ae60';
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '#007bff';
+            }, 2000);
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        });
+    }
+
+    // Initialize the app when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        new HelmChartBrowser();
+    });
+</script>
+</body>
 </html>
