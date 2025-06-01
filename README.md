@@ -6,7 +6,7 @@ https://charts.bmlt.app
 
 `helm search repo bmlt`
 
-`helm install <release> bmlt/bmlt-root-server -n <namespace>`
+`helm install <release> bmlt/bmlt-server -n <namespace>`
 
 * To deploy mysql to cluster you can do the following at minimum
     values yaml
@@ -24,4 +24,4 @@ https://charts.bmlt.app
 
 * If using alb for ingress you will need to make sure  AWS Load Balancer Controller is installed on cluster.
 
-dockerhub helm chart `helm pull oci://registry-1.docker.io/bmltenabled/bmlt-root-server --version 0.1.1`
+dockerhub helm chart `helm pull oci://registry-1.docker.io/bmltenabled/bmlt-server --version 0.1.1`

@@ -66,7 +66,7 @@ spec:
               imagePullPolicy: {{ .Values.image.pullPolicy }}
               command:
                 - /bin/bash
-                - /tmp/aggregator-import-root-servers.sh
+                - /tmp/aggregator-import-servers.sh
               env:
                 - name: AGGREGATOR_MODE_ENABLED
                 {{- if .Values.bmlt.aggregatorMode.enabled }}
