@@ -13,7 +13,7 @@ spec:
   ports:
     - port: {{ .Values.service.port }}
       targetPort: 8000
-      {{- if .Values.service.nodePort }}
+      {{- if and (ne .Values.service.type "ClusterIP") .Values.service.nodePort }}
       nodePort: {{ .Values.service.nodePort }}
       {{- end }}
       protocol: TCP

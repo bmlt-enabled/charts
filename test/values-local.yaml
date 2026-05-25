@@ -1,0 +1,27 @@
+# Override values for local k3d testing.
+# ALB ingress and NodePort don't make sense on a throwaway local cluster, so we
+# serve over ClusterIP and reach the app via `kubectl port-forward` (smoke-test.sh).
+image:
+  tag: "latest"
+
+ingress:
+  enabled: false
+
+service:
+  type: ClusterIP
+  port: 8000
+
+# The aggregator import reaches out to the public root-server list and takes a
+# while; leave it off for a basic smoke test (flip to true to exercise the CronJob).
+bmlt:
+  aggregatorMode:
+    enabled: false
+
+# Points at the MariaDB deployed by test/mariadb.yaml in the same namespace.
+database:
+  host: mariadb
+  port: 3306
+  name: rootserver
+  username: rootserver
+  password: rootserver
+  dbprefix: na

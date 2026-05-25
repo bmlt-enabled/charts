@@ -1,8 +1,9 @@
 CHART_DIR := charts/bmlt-server
+SITE_DIR := site
 REPO_URL := $(or $(REPO_URL), https://charts.bmlt.app)
 CHART_NAME := $(shell awk '/^name:/ {print $$2; exit}' $(CHART_DIR)/Chart.yaml)
 CHART_VERSION := $(shell awk '/^version:/ {print $$2; exit}' $(CHART_DIR)/Chart.yaml)
-PACKAGE := $(CHART_NAME)-$(CHART_VERSION).tgz
+PACKAGE := $(SITE_DIR)/$(CHART_NAME)-$(CHART_VERSION).tgz
 CHART_SOURCES := $(shell find $(CHART_DIR) -type f)
 
 help:  ## Print the help documentation
@@ -18,14 +19,14 @@ template:  ## Render the chart with default values
 
 $(PACKAGE): $(CHART_SOURCES)
 	helm lint $(CHART_DIR)
-	helm package $(CHART_DIR) --destination .
+	helm package $(CHART_DIR) --destination $(SITE_DIR)
 
 .PHONY: package
-package: $(PACKAGE)  ## Package the chart into a .tgz at the repo root
+package: $(PACKAGE)  ## Package the chart into a .tgz under site/
 
 .PHONY: index
-index: $(PACKAGE)  ## Regenerate index.yaml from the packaged charts
-	helm repo index . --url $(REPO_URL)
+index: $(PACKAGE)  ## Regenerate site/index.yaml from the packaged charts
+	helm repo index $(SITE_DIR) --url $(REPO_URL)
 
 .PHONY: release
 release: index  ## Lint, package, and regenerate the repo index
@@ -34,3 +35,18 @@ release: index  ## Lint, package, and regenerate the repo index
 .PHONY: clean
 clean:  ## Remove the .tgz for the current chart version
 	rm -f $(PACKAGE)
+
+.PHONY: cluster-up
+cluster-up:  ## Create a local k3d cluster, deploy MariaDB, and install the chart
+	./test/up.sh
+
+.PHONY: cluster-test
+cluster-test:  ## Smoke-test the app running in the local cluster
+	./test/smoke-test.sh
+
+.PHONY: cluster-down
+cluster-down:  ## Delete the local k3d test cluster
+	./test/down.sh
+
+.PHONY: e2e
+e2e: cluster-up cluster-test  ## Stand up the cluster and run the smoke test

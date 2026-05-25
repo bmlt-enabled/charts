@@ -3,9 +3,9 @@ entries:
   bmlt-server:
   - apiVersion: v2
     appVersion: 4.2.1
-    created: "2026-05-25T10:41:13.45012-04:00"
+    created: "2026-05-25T10:56:15.592927-04:00"
     description: Basic Meeting List Toolbox Server
-    digest: f94b277202770b1ac84a89cf72a5e46ce094d198a484c65fa41f2a39f56a0638
+    digest: bbc1933bacad635db6e1ed926add137ec864dff3835b5ec234f90c921464b02e
     home: https://bmlt.app
     icon: https://bmlt.app/wp-content/uploads/2020/08/cropped-BMLTe-logo-300x300.png
     keywords:
@@ -24,7 +24,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: 3.0.4
-    created: "2026-05-25T10:41:13.449586-04:00"
+    created: "2026-05-25T10:56:15.592304-04:00"
     description: Basic Meeting List Toolbox Server
     digest: 9a47e0b58dd44583268f843325346e28470716acbe6169bfd80b36b98e01dc94
     home: https://bmlt.app
@@ -43,4 +43,4 @@ entries:
     urls:
     - https://charts.bmlt.app/bmlt-server-0.1.0.tgz
     version: 0.1.0
-generated: "2026-05-25T10:41:13.448202-04:00"
+generated: "2026-05-25T10:56:15.588347-04:00"

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMLT Chart Repository</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --abyss: #061321;
+            --deep: #0a2032;
+            --hull: #102b42;
+            --line: rgba(216, 162, 74, 0.14);
+            --line-strong: rgba(216, 162, 74, 0.34);
+            --brass: #d8a24a;
+            --brass-bright: #f3c875;
+            --signal: #5fbfb0;
+            --parchment: #efe6cf;
+            --ink: #cdd9e0;
+            --muted: #6f8597;
+            --plate: #0d2638;
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            color: var(--ink);
+            background-color: var(--abyss);
+            background-image:
+                radial-gradient(120% 80% at 50% -10%, rgba(95, 191, 176, 0.10), transparent 60%),
+                radial-gradient(90% 60% at 85% 110%, rgba(216, 162, 74, 0.08), transparent 55%),
+                linear-gradient(var(--line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--line) 1px, transparent 1px),
+                linear-gradient(180deg, var(--abyss), var(--deep));
+            background-size: 100% 100%, 100% 100%, 44px 44px, 44px 44px, 100% 100%;
+            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* grain + drifting contour atmosphere */
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            opacity: 0.5;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+            mix-blend-mode: overlay;
+        }
+
+        .frame {
+            position: relative; z-index: 1;
+            max-width: 1180px; margin: 0 auto; padding: clamp(28px, 5vw, 72px) clamp(18px, 4vw, 56px);
+        }
+        /* corner registration marks on the chart frame */
+        .frame::before, .frame::after {
+            content: ""; position: absolute; width: 26px; height: 26px; pointer-events: none;
+            border-color: var(--line-strong); border-style: solid; border-width: 0;
+        }
+        .frame::before { top: 18px; left: 14px; border-top-width: 1px; border-left-width: 1px; }
+        .frame::after  { bottom: 18px; right: 14px; border-bottom-width: 1px; border-right-width: 1px; }
+
+        .coord {
+            position: fixed; z-index: 1; color: var(--muted);
+            font-size: 10px; letter-spacing: 0.28em; opacity: 0.55;
+            pointer-events: none; text-transform: uppercase;
+        }
+        .coord.tl { top: 22px; left: 24px; }
+        .coord.tr { top: 22px; right: 24px; }
+        .coord.bl { bottom: 22px; left: 24px; }
+        .coord.br { bottom: 22px; right: 24px; }
+        @media (max-width: 720px) { .coord { display: none; } }
+
+        /* ---- masthead ---- */
+        .masthead {
+            position: relative;
+            border: 1px solid var(--line-strong);
+            background: linear-gradient(180deg, rgba(16, 43, 66, 0.6), rgba(10, 32, 50, 0.3));
+            padding: clamp(28px, 4vw, 48px);
+            overflow: hidden;
+            animation: rise 0.9s cubic-bezier(.2,.7,.2,1) both;
+        }
+        .masthead .double-rule { position: absolute; inset: 7px; border: 1px solid var(--line); pointer-events: none; }
+        .compass {
+            position: absolute; right: clamp(-60px, -4vw, -30px); top: 50%; transform: translateY(-50%);
+            width: clamp(220px, 30vw, 340px); height: clamp(220px, 30vw, 340px);
+            opacity: 0.16; color: var(--brass);
+        }
+        .compass svg { width: 100%; height: 100%; animation: spin 90s linear infinite; }
+        .eyebrow {
+            display: inline-flex; align-items: center; gap: 10px;
+            font-size: 11px; letter-spacing: 0.42em; text-transform: uppercase; color: var(--signal);
+            margin: 0 0 18px;
+        }
+        .eyebrow::before { content: ""; width: 30px; height: 1px; background: var(--signal); display: inline-block; }
+        h1 {
+            font-family: 'Fraunces', Georgia, serif; font-weight: 900;
+            font-size: clamp(2.6rem, 7vw, 5rem); line-height: 0.92; letter-spacing: -0.02em;
+            margin: 0; color: var(--parchment);
+            text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+        }
+        h1 em { font-style: italic; font-weight: 400; color: var(--brass-bright); }
+        .lede { max-width: 46ch; margin: 20px 0 30px; color: var(--ink); font-size: 0.92rem; line-height: 1.7; }
+
+        .cmd {
+            position: relative; display: flex; align-items: stretch;
+            border: 1px solid var(--line-strong); background: rgba(4, 12, 20, 0.6);
+            max-width: 620px;
+        }
+        .cmd .prompt { color: var(--brass); padding: 16px 0 16px 18px; user-select: none; }
+        .cmd code { flex: 1; padding: 16px 14px; font-size: 0.86rem; color: var(--parchment); overflow-x: auto; white-space: nowrap; }
+        .copy-btn {
+            border: 0; border-left: 1px solid var(--line-strong);
+            background: transparent; color: var(--brass-bright);
+            font-family: inherit; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+            padding: 0 20px; cursor: pointer; transition: background 0.25s, color 0.25s; white-space: nowrap;
+        }
+        .copy-btn:hover { background: var(--brass); color: var(--abyss); }
+        .copy-btn.done { background: var(--signal); color: var(--abyss); }
+
+        /* ---- legend / stats ---- */
+        .legend {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            border: 1px solid var(--line-strong); border-top: 0;
+            background: rgba(13, 38, 56, 0.4);
+        }
+        .legend .cell { padding: 26px clamp(16px, 3vw, 34px); border-left: 1px solid var(--line); }
+        .legend .cell:first-child { border-left: 0; }
+        .legend .num { font-family: 'Fraunces', serif; font-weight: 500; font-size: clamp(2rem, 5vw, 3.2rem); color: var(--brass-bright); line-height: 1; }
+        .legend .lbl { font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--muted); margin-top: 12px; }
+        @media (max-width: 680px) {
+            .legend { grid-template-columns: 1fr; }
+            .legend .cell { border-left: 0; border-top: 1px solid var(--line); }
+            .legend .cell:first-child { border-top: 0; }
+        }
+
+        /* ---- section heading ---- */
+        .section-head {
+            display: flex; align-items: baseline; gap: 18px; margin: clamp(48px, 7vw, 80px) 0 26px;
+            animation: fade 1s ease both; animation-delay: 0.3s;
+        }
+        .section-head h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.5rem; color: var(--parchment); margin: 0; letter-spacing: -0.01em; }
+        .section-head .rule { flex: 1; height: 1px; background: repeating-linear-gradient(90deg, var(--line-strong) 0 8px, transparent 8px 16px); }
+
+        /* ---- chart plates ---- */
+        .plates { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 22px; }
+        .plate {
+            position: relative; border: 1px solid var(--line-strong);
+            background:
+                radial-gradient(140% 120% at 90% 0%, rgba(95,191,176,0.06), transparent 50%),
+                var(--plate);
+            padding: 28px 28px 30px; overflow: hidden;
+            transition: transform 0.4s cubic-bezier(.2,.7,.2,1), border-color 0.4s, box-shadow 0.4s;
+            opacity: 0; animation: rise 0.8s cubic-bezier(.2,.7,.2,1) forwards;
+            animation-delay: calc(var(--i) * 90ms + 0.4s);
+        }
+        .plate:hover {
+            transform: translateY(-6px);
+            border-color: var(--brass);
+            box-shadow: 0 24px 50px -28px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(216,162,74,0.18);
+        }
+        /* depth-contour corner flourish */
+        .plate .contour {
+            position: absolute; right: -40px; bottom: -40px; width: 150px; height: 150px;
+            color: var(--brass); opacity: 0.12; pointer-events: none;
+            transition: opacity 0.4s, transform 0.6s;
+        }
+        .plate:hover .contour { opacity: 0.22; transform: rotate(-8deg) scale(1.08); }
+        .plate .plate-no { font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--muted); }
+        .plate .name {
+            font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.7rem; color: var(--parchment);
+            margin: 8px 0 4px; letter-spacing: -0.01em; position: relative; z-index: 1;
+        }
+        .stamp {
+            display: inline-block; font-size: 11px; letter-spacing: 0.08em;
+            color: var(--brass-bright); border: 1px solid var(--brass); border-radius: 2px;
+            padding: 4px 9px; transform: rotate(-1.5deg); margin-bottom: 14px;
+        }
+        .desc { color: var(--ink); font-size: 0.86rem; line-height: 1.65; min-height: 2.6em; margin: 0 0 18px; position: relative; z-index: 1; }
+        .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; position: relative; z-index: 1; }
+        .tag {
+            font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--signal);
+            border: 1px solid rgba(95,191,176,0.3); padding: 4px 8px; border-radius: 2px;
+        }
+        .tag b { color: var(--ink); font-weight: 500; }
+        .install-lbl { font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+        .install {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(4, 12, 20, 0.7); border: 1px solid var(--line);
+            padding: 11px 12px; font-size: 0.78rem; color: var(--parchment);
+            overflow-x: auto; white-space: nowrap; position: relative; z-index: 1;
+        }
+        .install .prompt { color: var(--brass); }
+        .actions { display: flex; align-items: center; gap: 16px; margin-top: 20px; flex-wrap: wrap; position: relative; z-index: 1; }
+        .download {
+            display: inline-flex; align-items: center; gap: 9px; text-decoration: none;
+            font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 600;
+            color: var(--abyss); background: var(--brass);
+            padding: 12px 20px; border-radius: 2px; transition: background 0.25s, transform 0.25s;
+        }
+        .download:hover { background: var(--brass-bright); transform: translateX(3px); }
+        .download svg { width: 13px; height: 13px; }
+        .versions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        .versions .vlbl { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+        .chip {
+            text-decoration: none; font-size: 0.74rem; color: var(--ink);
+            border: 1px solid var(--line); padding: 5px 9px; border-radius: 2px; transition: border-color 0.25s, color 0.25s;
+        }
+        .chip:hover { border-color: var(--brass); color: var(--brass-bright); }
+
+        /* ---- states ---- */
+        .loading, .error { text-align: center; padding: 120px 20px; }
+        .loading .blip {
+            width: 46px; height: 46px; margin: 0 auto 26px; border-radius: 50%;
+            border: 1px solid var(--line-strong); border-top-color: var(--brass);
+            animation: spin 1.1s linear infinite;
+        }
+        .loading p, .error p { color: var(--muted); letter-spacing: 0.24em; text-transform: uppercase; font-size: 12px; }
+        .error { border: 1px solid rgba(220, 90, 70, 0.5); background: rgba(60, 18, 14, 0.4); }
+        .error h2 { font-family: 'Fraunces', serif; color: #e8a89b; margin: 0 0 12px; }
+        .error .detail { color: var(--ink); text-transform: none; letter-spacing: 0; margin-top: 14px; font-size: 0.85rem; }
+
+        /* ---- footer ---- */
+        .footer {
+            margin-top: clamp(56px, 8vw, 96px); padding-top: 28px;
+            border-top: 1px solid var(--line); display: flex; justify-content: space-between;
+            flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+        }
+        .footer a { color: var(--brass); text-decoration: none; }
+        .footer a:hover { color: var(--brass-bright); }
+
+        @keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+            .plate { opacity: 1; }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+</head>
+<body>
+<span class="coord tl">48°N · 002°W</span>
+<span class="coord tr">Depth ∞ ftm</span>
+<span class="coord bl">Var. 14°E</span>
+<span class="coord br">Scale 1:∞</span>
+
+<div id="app">
+    <div class="frame">
+        <div class="loading">
+            <div class="blip"></div>
+            <p>Sounding the repository…</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const COMPASS_SVG = `
+        <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1">
+            <circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="74"/><circle cx="100" cy="100" r="40"/>
+            <path d="M100 8 L112 100 L100 192 L88 100 Z" fill="currentColor" stroke="none" opacity="0.7"/>
+            <path d="M8 100 L100 88 L192 100 L100 112 Z" fill="currentColor" stroke="none" opacity="0.4"/>
+            <path d="M100 100 L135 65 M100 100 L65 135 M100 100 L135 135 M100 100 L65 65" opacity="0.5"/>
+        </svg>`;
+    const CONTOUR_SVG = `
+        <svg class="contour" viewBox="0 0 150 150" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M150 40 Q90 60 95 110 T40 150"/><path d="M150 70 Q110 80 112 115 T70 150"/>
+            <path d="M150 100 Q128 105 130 122 T100 150"/>
+        </svg>`;
+    const ICON_DL = `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1v8.5M8 9.5 4.5 6M8 9.5 11.5 6M2 13h12" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>`;
+
+    class ChartRepository {
+        constructor() {
+            this.repoUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+            this.init();
+        }
+
+        async init() {
+            try {
+                const res = await fetch('./index.yaml');
+                if (!res.ok) throw new Error(`index.yaml unreachable — ${res.status} ${res.statusText}`);
+                this.render(jsyaml.load(await res.text()));
+            } catch (err) {
+                this.renderError(err.message);
+            }
+        }
+
+        render(data) {
+            const entries = data.entries || {};
+            const totalCharts = Object.keys(entries).length;
+            const totalVersions = Object.values(entries).reduce((s, v) => s + v.length, 0);
+            const generated = data.generated ? new Date(data.generated) : new Date();
+            const addCmd = `helm repo add bmlt ${this.repoUrl}`;
+
+            document.getElementById('app').innerHTML = `
+                <div class="frame">
+                    <header class="masthead">
+                        <div class="double-rule"></div>
+                        <div class="compass">${COMPASS_SVG}</div>
+                        <p class="eyebrow">Helm Chart Repository</p>
+                        <h1>The BMLT<br><em>Chart</em> Repository</h1>
+                        <p class="lede">Production Helm charts for the Basic Meeting List Toolbox. Add the repository, then chart your course to a deployment.</p>
+                        <div class="cmd">
+                            <span class="prompt">$</span>
+                            <code id="add-cmd">${addCmd}</code>
+                            <button class="copy-btn" data-copy="${this.esc(addCmd)}">Copy</button>
+                        </div>
+                    </header>
+
+                    <section class="legend">
+                        <div class="cell"><div class="num">${String(totalCharts).padStart(2, '0')}</div><div class="lbl">Charts Plotted</div></div>
+                        <div class="cell"><div class="num">${String(totalVersions).padStart(2, '0')}</div><div class="lbl">Editions Logged</div></div>
+                        <div class="cell"><div class="num" style="font-size:clamp(1.1rem,3vw,1.7rem)">${generated.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})}</div><div class="lbl">Last Sounding</div></div>
+                    </section>
+
+                    <div class="section-head"><h2>Available Charts</h2><span class="rule"></span></div>
+                    <div class="plates">${this.renderPlates(entries)}</div>
+
+                    <footer class="footer">
+                        <span>Charted from index.yaml</span>
+                        <span><a href="https://bmlt.app" target="_blank" rel="noopener">bmlt.app</a> · <a href="https://github.com/bmlt-enabled/charts" target="_blank" rel="noopener">github</a></span>
+                    </footer>
+                </div>`;
+            this.wireCopy();
+        }
+
+        renderPlates(entries) {
+            return Object.entries(entries).map(([name, versions], idx) => {
+                const sorted = [...versions].sort((a, b) => this.cmpVersion(b.version, a.version));
+                const latest = sorted[0];
+                const created = latest.created ? new Date(latest.created) : null;
+                const installCmd = `helm install my-release bmlt/${name}`;
+                return `
+                    <article class="plate" style="--i:${idx}">
+                        ${CONTOUR_SVG}
+                        <div class="plate-no">Plate No. ${String(idx + 1).padStart(2, '0')}</div>
+                        <h3 class="name">${this.esc(name)}</h3>
+                        <span class="stamp">v${this.esc(latest.version)}</span>
+                        <p class="desc">${this.esc(latest.description || 'No description charted.')}</p>
+                        <div class="meta">
+                            <span class="tag">App <b>${this.esc(latest.appVersion || 'n/a')}</b></span>
+                            <span class="tag">Type <b>${this.esc(latest.type || 'application')}</b></span>
+                            ${created ? `<span class="tag">Logged <b>${created.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'2-digit'})}</b></span>` : ''}
+                        </div>
+                        <div class="install-lbl">Set Sail</div>
+                        <div class="install"><span class="prompt">$</span><span>${this.esc(installCmd)}</span></div>
+                        <div class="actions">
+                            <a class="download" href="${this.esc(latest.urls[0])}">${ICON_DL} Download v${this.esc(latest.version)}</a>
+                            ${sorted.length > 1 ? `
+                                <div class="versions">
+                                    <span class="vlbl">Prior</span>
+                                    ${sorted.slice(1).map(v => `<a class="chip" href="${this.esc(v.urls[0])}">v${this.esc(v.version)}</a>`).join('')}
+                                </div>` : ''}
+                        </div>
+                    </article>`;
+            }).join('');
+        }
+
+        renderError(message) {
+            document.getElementById('app').innerHTML = `
+                <div class="frame">
+                    <div class="error">
+                        <h2>Off the Chart</h2>
+                        <p>Could not plot the repository</p>
+                        <p class="detail">${this.esc(message)}</p>
+                    </div>
+                </div>`;
+        }
+
+        wireCopy() {
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const text = btn.dataset.copy;
+                    const done = () => { btn.textContent = 'Copied'; btn.classList.add('done'); setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1800); };
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopy(text, done));
+                    } else { this.fallbackCopy(text, done); }
+                });
+            });
+        }
+
+        fallbackCopy(text, done) {
+            const ta = document.createElement('textarea');
+            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); done(); } finally { document.body.removeChild(ta); }
+        }
+
+        esc(s) {
+            return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        cmpVersion(a, b) {
+            const ap = String(a).split('.').map(n => parseInt(n) || 0);
+            const bp = String(b).split('.').map(n => parseInt(n) || 0);
+            for (let i = 0; i < Math.max(ap.length, bp.length); i++) {
+                if ((ap[i] || 0) !== (bp[i] || 0)) return (ap[i] || 0) - (bp[i] || 0);
+            }
+            return 0;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => new ChartRepository());
+</script>
+</body>
+</html>
