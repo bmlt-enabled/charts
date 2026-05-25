@@ -49,3 +49,54 @@ Selector labels
 app.kubernetes.io/name: {{ include "bmlt-server.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Container environment shared by the Deployment and the aggregator CronJob.
+The bmlt-server app reads DB_USERNAME/DB_PASSWORD/etc. and GOOGLE_API_KEY
+(see App\ConfigBase::fromEnv). Each value can come from a referenced Secret
+({name,key}) or an inline plaintext value.
+*/}}
+{{- define "bmlt-server.env" -}}
+- name: AGGREGATOR_MODE_ENABLED
+  value: {{ .Values.bmlt.aggregatorMode.enabled | quote }}
+- name: DB_DATABASE
+  value: {{ .Values.database.name | quote }}
+- name: DB_HOST
+  value: {{ .Values.database.host | quote }}
+- name: DB_PORT
+  value: {{ .Values.database.port | quote }}
+- name: DB_USERNAME
+{{- if .Values.database.secrets.username }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ tpl .Values.database.secrets.username.name . }}
+      key: {{ tpl .Values.database.secrets.username.key . }}
+{{- else if .Values.database.username }}
+  value: {{ .Values.database.username | quote }}
+{{- end }}
+- name: DB_PASSWORD
+{{- if .Values.database.secrets.password }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ tpl .Values.database.secrets.password.name . }}
+      key: {{ tpl .Values.database.secrets.password.key . }}
+{{- else if .Values.database.password }}
+  value: {{ .Values.database.password | quote }}
+{{- end }}
+- name: DB_PREFIX
+  value: {{ .Values.database.dbprefix | default "na" | quote }}
+{{- if or .Values.bmlt.secrets.googleApiKey .Values.bmlt.googleApiKey }}
+- name: GOOGLE_API_KEY
+{{- if .Values.bmlt.secrets.googleApiKey }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ tpl .Values.bmlt.secrets.googleApiKey.name . }}
+      key: {{ tpl .Values.bmlt.secrets.googleApiKey.key . }}
+{{- else }}
+  value: {{ .Values.bmlt.googleApiKey | quote }}
+{{- end }}
+{{- end }}
+{{- with .Values.extraEnv }}
+{{ toYaml . }}
+{{- end }}
+{{- end }}

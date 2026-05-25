@@ -31,7 +31,6 @@ spec:
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          command: ["/bin/bash", "/tmp/start-bmlt.sh"]
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
@@ -40,55 +39,17 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: 8000
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
           readinessProbe:
             httpGet:
               path: /
-              port: 8000
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
           env:
-            - name: AGGREGATOR_MODE_ENABLED
-            {{- if .Values.bmlt.aggregatorMode.enabled }}
-              value: {{ .Values.bmlt.aggregatorMode.enabled | quote }}
-            {{- else }}
-              value: "false"
-            {{- end }}
-            - name: DB_DATABASE
-              value: {{ .Values.database.name | quote }}
-            - name: DB_USER
-            {{- if .Values.database.secrets.username }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ tpl .Values.database.secrets.username.name . }}
-                  key: {{ tpl .Values.database.secrets.username.key . }}
-            {{- else if .Values.database.username }}
-              value: {{ .Values.database.username }}
-            {{- end }}
-            - name: DB_PASSWORD
-            {{- if .Values.database.secrets.password }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ tpl .Values.database.secrets.password.name . }}
-                  key: {{ tpl .Values.database.secrets.password.key . }}
-            {{- else if .Values.database.password }}
-              value: {{ .Values.database.password }}
-            {{- end }}
-            - name: DB_HOST
-              value: {{ .Values.database.host | quote }}
-            - name: GKEY
-            {{- if .Values.bmlt.secrets.gkey }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ tpl .Values.bmlt.secrets.gkey.name . }}
-                  key: {{ tpl .Values.bmlt.secrets.gkey.key . }}
-            {{- else if .Values.bmlt.gkey }}
-              value: {{ .Values.bmlt.gkey }}
-            {{- end }}
-            - name: DB_PREFIX
-            {{- if .Values.database.dbprefix }}
-              value: {{ .Values.database.dbprefix | quote }}
-            {{- else }}
-              value: "na"
-            {{- end }}
+            {{- include "bmlt-server.env" . | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

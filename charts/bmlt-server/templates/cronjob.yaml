@@ -2,114 +2,42 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: aggregator-import
+  name: {{ include "bmlt-server.fullname" . }}-aggregator-import
+  labels:
+    {{- include "bmlt-server.labels" . | nindent 4 }}
 spec:
   schedule: {{ .Values.bmlt.aggregatorMode.schedule | quote }}
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
       template:
+        metadata:
+          labels:
+            {{- include "bmlt-server.selectorLabels" . | nindent 12 }}
         spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           initContainers:
             - name: aggregator-init
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}
               command:
-                - /bin/bash
-                - /tmp/aggregator-initialize-database.sh
+                - php
+                - /var/www/html/main_server/artisan
+                - aggregator:InitializeDatabase
               env:
-                - name: AGGREGATOR_MODE_ENABLED
-                {{- if .Values.bmlt.aggregatorMode.enabled }}
-                  value: {{ .Values.bmlt.aggregatorMode.enabled | quote }}
-                {{- else }}
-                  value: "true"
-                {{- end }}
-                - name: DB_DATABASE
-                  value: {{ .Values.database.name | quote }}
-                - name: DB_USER
-                {{- if .Values.database.secrets.username }}
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ tpl .Values.database.secrets.username.name . }}
-                      key: {{ tpl .Values.database.secrets.username.key . }}
-                {{- else if .Values.database.username }}
-                  value: {{ .Values.database.username }}
-                {{- end }}
-                - name: DB_PASSWORD
-                {{- if .Values.database.secrets.password }}
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ tpl .Values.database.secrets.password.name . }}
-                      key: {{ tpl .Values.database.secrets.password.key . }}
-                {{- else if .Values.database.password }}
-                  value: {{ .Values.database.password }}
-                {{- end }}
-                - name: DB_HOST
-                  value: {{ .Values.database.host | quote }}
-                - name: GKEY
-                {{- if .Values.bmlt.secrets.gkey }}
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ tpl .Values.bmlt.secrets.gkey.name . }}
-                      key: {{ tpl .Values.bmlt.secrets.gkey.key . }}
-                {{- else if .Values.bmlt.gkey }}
-                  value: {{ .Values.bmlt.gkey }}
-                {{- end }}
-                - name: DB_PREFIX
-                {{- if .Values.database.dbprefix }}
-                  value: {{ .Values.database.dbprefix | quote }}
-                {{- else }}
-                  value: "na"
-                {{- end }}
+                {{- include "bmlt-server.env" . | nindent 16 }}
           containers:
             - name: aggregator-import
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}
               command:
-                - /bin/bash
-                - /tmp/aggregator-import-servers.sh
+                - php
+                - /var/www/html/main_server/artisan
+                - aggregator:ImportRootServers
               env:
-                - name: AGGREGATOR_MODE_ENABLED
-                {{- if .Values.bmlt.aggregatorMode.enabled }}
-                  value: {{ .Values.bmlt.aggregatorMode.enabled | quote }}
-                {{- else }}
-                  value: "true"
-                {{- end }}
-                - name: DB_DATABASE
-                  value: {{ .Values.database.name | quote }}
-                - name: DB_USER
-                {{- if .Values.database.secrets.username }}
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ tpl .Values.database.secrets.username.name . }}
-                      key: {{ tpl .Values.database.secrets.username.key . }}
-                {{- else if .Values.database.username }}
-                  value: {{ .Values.database.username }}
-                {{- end }}
-                - name: DB_PASSWORD
-                {{- if .Values.database.secrets.password }}
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ tpl .Values.database.secrets.password.name . }}
-                      key: {{ tpl .Values.database.secrets.password.key . }}
-                {{- else if .Values.database.password }}
-                  value: {{ .Values.database.password }}
-                {{- end }}
-                - name: DB_HOST
-                  value: {{ .Values.database.host | quote }}
-                - name: GKEY
-                {{- if .Values.bmlt.secrets.gkey }}
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ tpl .Values.bmlt.secrets.gkey.name . }}
-                      key: {{ tpl .Values.bmlt.secrets.gkey.key . }}
-                {{- else if .Values.bmlt.gkey }}
-                  value: {{ .Values.bmlt.gkey }}
-                {{- end }}
-                - name: DB_PREFIX
-                {{- if .Values.database.dbprefix }}
-                  value: {{ .Values.database.dbprefix | quote }}
-                {{- else }}
-                  value: "na"
-                {{- end }}
+                {{- include "bmlt-server.env" . | nindent 16 }}
           restartPolicy: OnFailure
 {{- end }}

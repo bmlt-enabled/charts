@@ -7,17 +7,19 @@ replicaCount: 1
 image:
   repository: bmltenabled/bmlt-server
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  # Overrides the image tag whose default is the chart appVersion. Set to
+  # "latest" to always track the newest published image.
+  tag: ""
 
 bmlt:
   aggregatorMode:
     enabled: true
     schedule: "0 */2 * * *"
-  gkey: ""
+  # Google Maps API key, exposed to the app as GOOGLE_API_KEY.
+  googleApiKey: ""
   secrets: {}
-    # gkey:
-    #   name: "gkey-creds"
+    # googleApiKey:
+    #   name: "google-creds"
     #   key: "google-key"
 
 database:
@@ -26,6 +28,8 @@ database:
   name: rootserver
   username: rootserver
   password: rootserver
+  # Table prefix, exposed as DB_PREFIX (defaults to "na" when unset).
+  dbprefix: "na"
   secrets: {}
     # username:
     #   name: "database-creds"
@@ -33,6 +37,15 @@ database:
     # password:
     #   name: "database-creds"
     #   key: "db-admin-password"
+
+# Extra environment variables passed verbatim to the server and aggregator
+# containers, e.g. MEETING_STATES_AND_PROVINCES, ENABLE_LANGUAGE_SELECTOR,
+# AGGREGATOR_USER_AGENT.
+extraEnv: []
+  # - name: ENABLE_LANGUAGE_SELECTOR
+  #   value: "true"
+  # - name: MEETING_STATES_AND_PROVINCES
+  #   value: "CT,MA,NH,NJ,NY,PA,VT"
 
 service:
   type: NodePort
