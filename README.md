@@ -31,24 +31,36 @@ You bring your own MySQL/MariaDB — the chart only points the app at it.
 
 ## Database
 
-The server needs a MySQL/MariaDB database. A quick way to stand one up is the
-Bitnami chart:
+The server needs a MySQL/MariaDB database — the chart does not provision one.
 
-```yaml
-# mysql-values.yaml
-auth:
-  rootPassword: rootserver
-  database: rootserver
-  username: rootserver
-  password: rootserver
-```
+**For production**, the maintained, cloud-native option is the
+[`mariadb-operator`](https://github.com/mariadb-operator/mariadb-operator),
+which manages MariaDB (including Galera clustering, backups, and restores) via
+Kubernetes custom resources:
 
 ```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install mysql bitnami/mysql -f mysql-values.yaml -n <namespace>
+helm repo add mariadb-operator https://helm.mariadb.com/mariadb-operator
+helm install mariadb-operator-crds mariadb-operator/mariadb-operator-crds
+helm install mariadb-operator mariadb-operator/mariadb-operator -n <namespace>
 ```
 
-Then point the chart at it via the `database.*` values below.
+Then create a `MariaDB` resource and a `Secret` for its credentials, and point
+the chart at the resulting Service via the `database.*` values below. See the
+[operator quickstart](https://github.com/mariadb-operator/mariadb-operator#quickstart)
+for the CR.
+
+**To just try the chart out**, this repo ships a throwaway MariaDB
+`Deployment` + `Service` at [`test/mariadb.yaml`](test/mariadb.yaml) (the same
+one `make e2e` uses). It is intentionally minimal — no persistence, hardcoded
+credentials — so use it for local testing only, not production:
+
+```bash
+kubectl apply -f test/mariadb.yaml -n <namespace>
+```
+
+> Older guides recommended the Bitnami MySQL chart. Bitnami deprecated its free
+> catalog in August 2025 (versioned images moved to the frozen `bitnamilegacy`
+> repository), so it is no longer a good choice for new deployments.
 
 ## Configuration
 
