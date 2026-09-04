@@ -49,4 +49,5 @@ cluster-down:  ## Delete the local k3d test cluster
 	./test/down.sh
 
 .PHONY: e2e
-e2e: cluster-up cluster-test  ## Stand up the cluster and run the smoke test
+e2e:  ## Full smoke test: up + smoke-test + guaranteed teardown (KEEP=1 to keep cluster)
+	./test/e2e.sh
