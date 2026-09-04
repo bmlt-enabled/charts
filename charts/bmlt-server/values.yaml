@@ -48,10 +48,13 @@ extraEnv: []
   #   value: "CT,MA,NH,NJ,NY,PA,VT"
 
 service:
-  type: NodePort
+  type: ClusterIP
   # This is external port
   port: 8000
+  # Only used when type is NodePort or LoadBalancer.
   nodePort: 30288
+  # Extra annotations for the Service, e.g. cloud load-balancer settings.
+  annotations: {}
 
 ingress:
   enabled: true
@@ -60,9 +63,11 @@ ingress:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: instance
-    alb.ingress.kubernetes.io/subnets: "subnet-1234, subnet-5678"
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/certificate-arn: "<ACM ARN>"
+    # Supply these for a real ALB deploy (left out so a default install does not
+    # render an invalid Ingress):
+    # alb.ingress.kubernetes.io/subnets: "subnet-1234, subnet-5678"
+    # alb.ingress.kubernetes.io/certificate-arn: "<ACM ARN>"
   hosts:
     - host: bmlt.mydomain.org
       paths:
@@ -78,6 +83,17 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created.
+  create: true
+  # Automatically mount the ServiceAccount's API token.
+  automount: true
+  # Annotations to add to the ServiceAccount (e.g. IAM role for IRSA).
+  annotations: {}
+  # Name to use; if empty and create is true, a name is generated from the
+  # fullname template.
+  name: ""
+
 podAnnotations: {}
 
 podSecurityContext: {}
@@ -91,17 +107,15 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+# CPU/memory requests are set so the pod gets Burstable QoS and so the CPU
+# HorizontalPodAutoscaler has a request to measure against. Tune for your load;
+# set to {} to leave resources unconstrained.
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
 
 autoscaling:
   enabled: false

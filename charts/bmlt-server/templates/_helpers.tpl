@@ -51,6 +51,17 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Name of the ServiceAccount to use.
+*/}}
+{{- define "bmlt-server.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create }}
+{{- default (include "bmlt-server.fullname" .) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{/*
 Container environment shared by the Deployment and the aggregator CronJob.
 The bmlt-server app reads DB_USERNAME/DB_PASSWORD/etc. and GOOGLE_API_KEY
 (see App\ConfigBase::fromEnv). Each value can come from a referenced Secret
@@ -81,7 +92,10 @@ The bmlt-server app reads DB_USERNAME/DB_PASSWORD/etc. and GOOGLE_API_KEY
       name: {{ tpl .Values.database.secrets.password.name . }}
       key: {{ tpl .Values.database.secrets.password.key . }}
 {{- else if .Values.database.password }}
-  value: {{ .Values.database.password | quote }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "bmlt-server.fullname" . }}
+      key: db-password
 {{- end }}
 - name: DB_PREFIX
   value: {{ .Values.database.dbprefix | default "na" | quote }}
@@ -93,7 +107,10 @@ The bmlt-server app reads DB_USERNAME/DB_PASSWORD/etc. and GOOGLE_API_KEY
       name: {{ tpl .Values.bmlt.secrets.googleApiKey.name . }}
       key: {{ tpl .Values.bmlt.secrets.googleApiKey.key . }}
 {{- else }}
-  value: {{ .Values.bmlt.googleApiKey | quote }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "bmlt-server.fullname" . }}
+      key: google-api-key
 {{- end }}
 {{- end }}
 {{- with .Values.extraEnv }}
